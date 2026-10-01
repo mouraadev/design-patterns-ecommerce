@@ -1,6 +1,6 @@
 package com.ecommerce.decorator;
 
-public class SeguroEnvio extends ItemDecorator {
+public final class SeguroEnvio extends ItemDecorator {
 
     private static final double CUSTO_SEGURO = 24.90;
 
@@ -10,11 +10,11 @@ public class SeguroEnvio extends ItemDecorator {
 
     @Override
     public String getDescricao() {
-        return itemDecorado.getDescricao() + " + Seguro de envio";
+        return super.getDescricao() + " + Seguro de envio";
     }
 
     @Override
     public double getPreco() {
-        return itemDecorado.getPreco() + CUSTO_SEGURO;
+        return super.getPreco() + CUSTO_SEGURO;
     }
 }

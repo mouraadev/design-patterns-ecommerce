@@ -2,31 +2,28 @@ package com.ecommerce.builder;
 
 import com.ecommerce.decorator.Item;
 import com.ecommerce.enums.StatusPedido;
+import com.ecommerce.exception.PedidoInvalidoException;
 import com.ecommerce.observer.ObservadorPedido;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Padrão BUILDER (construção passo a passo de um objeto complexo) combinado
- * com o padrão OBSERVER (o próprio Pedido funciona como "sujeito" que
- * notifica interessados sempre que seu status muda).
- */
-public class Pedido {
+public final class Pedido {
 
     private final String id;
     private final String cliente;
     private final String enderecoEntrega;
     private final List<Item> itens;
-    private StatusPedido status;
-    private final List<ObservadorPedido> observadores = new ArrayList<>();
+    private volatile StatusPedido status;
+    private final List<ObservadorPedido> observadores = new CopyOnWriteArrayList<>();
 
     private Pedido(Builder builder) {
         this.id = builder.id;
         this.cliente = builder.cliente;
         this.enderecoEntrega = builder.enderecoEntrega;
-        this.itens = builder.itens;
+        this.itens = List.copyOf(builder.itens);
         this.status = StatusPedido.CRIADO;
     }
 
@@ -43,7 +40,7 @@ public class Pedido {
     }
 
     public List<Item> getItens() {
-        return Collections.unmodifiableList(itens);
+        return itens;
     }
 
     public StatusPedido getStatus() {
@@ -55,11 +52,11 @@ public class Pedido {
     }
 
     public void adicionarObservador(ObservadorPedido observador) {
-        observadores.add(observador);
+        observadores.add(Objects.requireNonNull(observador, "O observador é obrigatório."));
     }
 
     public void atualizarStatus(StatusPedido novoStatus) {
-        this.status = novoStatus;
+        this.status = Objects.requireNonNull(novoStatus, "O novo status é obrigatório.");
         notificarObservadores();
     }
 
@@ -82,36 +79,39 @@ public class Pedido {
         return sb.toString();
     }
 
-    /**
-     * BUILDER: constrói um {@link Pedido} passo a passo, com métodos
-     * encadeáveis (fluent interface).
-     */
     public static class Builder {
         private final String id;
         private final String cliente;
-        private String enderecoEntrega = "Não informado";
+        private String enderecoEntrega;
         private final List<Item> itens = new ArrayList<>();
 
         public Builder(String id, String cliente) {
-            this.id = id;
-            this.cliente = cliente;
+            this.id = textoObrigatorio(id, "O identificador do pedido é obrigatório.");
+            this.cliente = textoObrigatorio(cliente, "O cliente é obrigatório.");
         }
 
         public Builder comEndereco(String endereco) {
-            this.enderecoEntrega = endereco;
+            this.enderecoEntrega = textoObrigatorio(endereco, "O endereço de entrega é obrigatório.");
             return this;
         }
 
         public Builder adicionarItem(Item item) {
-            this.itens.add(item);
+            this.itens.add(Objects.requireNonNull(item, "O item é obrigatório."));
             return this;
         }
 
         public Pedido build() {
             if (itens.isEmpty()) {
-                throw new IllegalStateException("O pedido precisa ter ao menos um item.");
+                throw new PedidoInvalidoException("O pedido precisa ter ao menos um item.");
             }
             return new Pedido(this);
+        }
+
+        private static String textoObrigatorio(String valor, String mensagem) {
+            if (valor == null || valor.isBlank()) {
+                throw new PedidoInvalidoException(mensagem);
+            }
+            return valor.trim();
         }
     }
 }

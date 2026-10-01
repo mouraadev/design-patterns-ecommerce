@@ -2,11 +2,17 @@ package com.ecommerce.factory;
 
 public abstract class Produto {
 
-    protected final String nome;
-    protected final double preco;
+    private final String nome;
+    private final double preco;
 
     protected Produto(String nome, double preco) {
-        this.nome = nome;
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome do produto é obrigatório.");
+        }
+        if (!Double.isFinite(preco) || preco <= 0) {
+            throw new IllegalArgumentException("O preço do produto deve ser positivo.");
+        }
+        this.nome = nome.trim();
         this.preco = preco;
     }
 

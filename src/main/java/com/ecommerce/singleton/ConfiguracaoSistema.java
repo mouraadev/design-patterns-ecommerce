@@ -1,13 +1,12 @@
 package com.ecommerce.singleton;
 
-/**
- * Padrão SINGLETON.
- * Garante que exista uma única instância de configuração/log do sistema,
- * acessível globalmente através de {@link #getInstance()}.
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class ConfiguracaoSistema {
 
-    private static ConfiguracaoSistema instancia;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfiguracaoSistema.class);
+    private static final ConfiguracaoSistema INSTANCIA = new ConfiguracaoSistema();
 
     private final String nomeLoja;
     private final double taxaImpostoPadrao;
@@ -17,11 +16,8 @@ public final class ConfiguracaoSistema {
         this.taxaImpostoPadrao = 0.08;
     }
 
-    public static synchronized ConfiguracaoSistema getInstance() {
-        if (instancia == null) {
-            instancia = new ConfiguracaoSistema();
-        }
-        return instancia;
+    public static ConfiguracaoSistema getInstance() {
+        return INSTANCIA;
     }
 
     public String getNomeLoja() {
@@ -33,6 +29,6 @@ public final class ConfiguracaoSistema {
     }
 
     public void log(String mensagem) {
-        System.out.println("[" + nomeLoja + "] " + mensagem);
+        LOGGER.info("[{}] {}", nomeLoja, mensagem);
     }
 }

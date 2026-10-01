@@ -1,12 +1,13 @@
 package com.ecommerce.decorator;
 
+import java.util.Objects;
 
 public abstract class ItemDecorator implements Item {
 
-    protected final Item itemDecorado;
+    private final Item itemDecorado;
 
     protected ItemDecorator(Item itemDecorado) {
-        this.itemDecorado = itemDecorado;
+        this.itemDecorado = Objects.requireNonNull(itemDecorado, "O item decorado é obrigatório.");
     }
 
     @Override

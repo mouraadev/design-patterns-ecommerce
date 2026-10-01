@@ -19,82 +19,81 @@ e-commerce.
 | **Facade** | `facade/PedidoFacade.java` | Expõe um único método (`finalizarPedido`) que orquestra toda a complexidade dos padrões acima. |
 | **Singleton** | `singleton/ConfiguracaoSistema.java` | Garante uma única instância de configuração/log do sistema, acessível globalmente. |
 
+## Qualidade e arquitetura
+
+Além dos oito padrões, o projeto inclui as melhorias levantadas na revisão de
+código:
+
+- testes unitários com JUnit e Mockito para todos os padrões;
+- inversão de dependência na cadeia por meio da interface `ValidadorPedido`;
+- exceções de domínio para pedido inválido, falta de estoque e pagamento recusado;
+- cópias defensivas, campos finais e Singleton thread-safe;
+- logging com SLF4J, sem chamadas diretas a `System.out`;
+- relatório e limite mínimo de cobertura com JaCoCo;
+- integração contínua com GitHub Actions.
+
 ## Estrutura do projeto
 
 ```
 design-patterns-ecommerce/
 ├── pom.xml
+├── .github/workflows/ci.yml          # build e testes em cada PR/push
 ├── .gitignore
 ├── README.md
-└── src/main/java/com/ecommerce/
-    ├── Main.java                     # demonstra todos os padrões em conjunto
-    ├── builder/Pedido.java
-    ├── factory/{Produto,Eletronico,Livro,Roupa,ProdutoFactory}.java
-    ├── decorator/{Item,ProdutoItem,ItemDecorator,EmbalagemPresente,SeguroEnvio}.java
-    ├── strategy/{EstrategiaPagamento,PagamentoCartaoCredito,PagamentoBoleto,PagamentoPix}.java
-    ├── observer/{ObservadorPedido,NotificadorEmail,NotificadorSms}.java
-    ├── chain/{ValidadorPedido,ValidadorEstoque,ValidadorEndereco,ValidadorFraude}.java
-    ├── facade/PedidoFacade.java
-    ├── singleton/ConfiguracaoSistema.java
-    └── enums/StatusPedido.java
+└── src/
+    ├── main/java/com/ecommerce/
+    │   ├── Main.java                 # demonstra todos os padrões em conjunto
+    │   ├── builder/Pedido.java
+    │   ├── factory/*
+    │   ├── decorator/*
+    │   ├── strategy/*
+    │   ├── observer/*
+    │   ├── chain/*
+    │   ├── facade/PedidoFacade.java
+    │   ├── singleton/ConfiguracaoSistema.java
+    │   ├── exception/*
+    │   └── enums/StatusPedido.java
+    └── test/java/com/ecommerce/      # oito suítes de testes unitários
 ```
 
 ## Como executar
 
-Requer **JDK 17+**.
+Requer **JDK 17+** e **Maven 3.9+**.
 
-### Opção 1 — sem Maven (javac direto)
 ```bash
-find src -name "*.java" > sources.txt
-javac -encoding UTF-8 -d out @sources.txt
-java -cp out com.ecommerce.Main
-```
+# compilar, testar, verificar cobertura e gerar o JAR executável
+mvn clean verify
 
-### Opção 2 — com Maven
-```bash
-mvn compile exec:java -Dexec.mainClass="com.ecommerce.Main"
-# ou gerar o JAR executável:
-mvn package
+# executar a demonstração
 java -jar target/design-patterns-ecommerce.jar
 ```
 
+O relatório de cobertura é gerado em `target/site/jacoco/index.html`. O build
+falha se a cobertura de linhas do projeto cair abaixo de 70%.
+
 ## Exemplo de saída
 
-```
-Pedido PED-001 - Cliente: Maria Silva
+```text
+[main] INFO com.ecommerce.Main - Pedido PED-001 - Cliente: Maria Silva
   - Notebook Gamer + Seguro de envio (R$ 4524.90)
   - Clean Code + Embalagem para presente (R$ 99.80)
   - Camiseta DIO (R$ 59.90)
 Total: R$ 4684.60
 Status: CRIADO
 
-[TechShop Brasil] Iniciando processamento do pedido PED-001
-[Validação] Verificando estoque... OK
-[Validação] Verificando endereço de entrega... OK
-[Validação] Análise antifraude... OK
-[TechShop Brasil] Processando pagamento via Cartão de Crédito (3x)
-Cobrando R$ 4684.60 no cartão final 5678 em 3x
-[E-mail] Olá Maria Silva, o status do seu pedido PED-001 mudou para: PAGAMENTO_APROVADO
-[SMS] Maria Silva, pedido PED-001: PAGAMENTO_APROVADO
+[main] INFO com.ecommerce.facade.PedidoFacade - [TechShop Brasil] Iniciando processamento do pedido PED-001
+[main] INFO com.ecommerce.chain.ValidadorEstoque - Estoque validado para o pedido PED-001
+[main] INFO com.ecommerce.chain.ValidadorEndereco - Endereço validado para o pedido PED-001
+[main] INFO com.ecommerce.chain.ValidadorFraude - Análise antifraude aprovada para o pedido PED-001
+[main] INFO com.ecommerce.facade.PedidoFacade - [TechShop Brasil] Processando pagamento via Cartão de Crédito (3x)
+[main] INFO com.ecommerce.strategy.PagamentoCartaoCredito - Cobrando R$ 4684.60 no cartão final 5678 em 3x
 ...
-Status final do pedido: ENVIADO
-```
-
-## Publicando no GitHub
-
-```bash
-cd design-patterns-ecommerce
-git init
-git add .
-git commit -m "Projeto final: Design Patterns aplicados a um sistema de pedidos"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/design-patterns-ecommerce.git
-git push -u origin main
+[main] INFO com.ecommerce.Main - Status final do pedido: ENVIADO
 ```
 
 ## Referências
 
 Projeto desenvolvido como entrega do desafio de Padrões de Projeto do
 bootcamp DIO, com base nos repositórios de referência da trilha:
-- `github.com/digitalinnovationone/lab-padroes-projeto-java`
-- `github.com/digitalinnovationone/lab-padroes-projeto-spring`
+- [Lab Padrões de Projeto Java](https://github.com/digitalinnovationone/lab-padroes-projeto-java)
+- [Lab Padrões de Projeto Spring](https://github.com/digitalinnovationone/lab-padroes-projeto-spring)

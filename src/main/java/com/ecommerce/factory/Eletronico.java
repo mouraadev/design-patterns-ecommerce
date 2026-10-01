@@ -1,6 +1,6 @@
 package com.ecommerce.factory;
 
-public class Eletronico extends Produto {
+public final class Eletronico extends Produto {
 
     private final int garantiaMeses;
 

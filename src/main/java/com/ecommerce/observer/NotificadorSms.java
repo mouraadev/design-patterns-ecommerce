@@ -2,12 +2,18 @@ package com.ecommerce.observer;
 
 import com.ecommerce.builder.Pedido;
 import com.ecommerce.enums.StatusPedido;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class NotificadorSms implements ObservadorPedido {
+public final class NotificadorSms implements ObservadorPedido {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificadorSms.class);
+
+    public NotificadorSms() {
+    }
 
     @Override
     public void atualizar(Pedido pedido, StatusPedido novoStatus) {
-        System.out.printf("[SMS] %s, pedido %s: %s%n",
-                pedido.getCliente(), pedido.getId(), novoStatus);
+        LOGGER.info("[SMS] {}, pedido {}: {}", pedido.getCliente(), pedido.getId(), novoStatus);
     }
 }

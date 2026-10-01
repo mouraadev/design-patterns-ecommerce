@@ -1,6 +1,6 @@
 package com.ecommerce.decorator;
 
-public class EmbalagemPresente extends ItemDecorator {
+public final class EmbalagemPresente extends ItemDecorator {
 
     private static final double CUSTO_EMBALAGEM = 9.90;
 
@@ -10,11 +10,11 @@ public class EmbalagemPresente extends ItemDecorator {
 
     @Override
     public String getDescricao() {
-        return itemDecorado.getDescricao() + " + Embalagem para presente";
+        return super.getDescricao() + " + Embalagem para presente";
     }
 
     @Override
     public double getPreco() {
-        return itemDecorado.getPreco() + CUSTO_EMBALAGEM;
+        return super.getPreco() + CUSTO_EMBALAGEM;
     }
 }

@@ -10,23 +10,27 @@ import com.ecommerce.factory.Produto;
 import com.ecommerce.factory.ProdutoFactory;
 import com.ecommerce.strategy.EstrategiaPagamento;
 import com.ecommerce.strategy.PagamentoCartaoCredito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class Main {
+public final class Main {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
+    private Main() {
+    }
 
     public static void main(String[] args) {
-        System.out.println("=== Sistema de Pedidos - Demonstração de Design Patterns ===\n");
+        LOGGER.info("=== Sistema de Pedidos - Demonstração de Design Patterns ===");
 
-        // ---- FACTORY METHOD ----
         Produto notebook = ProdutoFactory.criar(ProdutoFactory.TipoProduto.ELETRONICO, "Notebook Gamer", 4500.00);
         Produto livro = ProdutoFactory.criar(ProdutoFactory.TipoProduto.LIVRO, "Clean Code", 89.90);
         Produto camiseta = ProdutoFactory.criar(ProdutoFactory.TipoProduto.ROUPA, "Camiseta DIO", 59.90);
 
-        // ---- DECORATOR ----
         Item itemNotebook = new SeguroEnvio(new ProdutoItem(notebook));
         Item itemLivro = new EmbalagemPresente(new ProdutoItem(livro));
         Item itemCamiseta = new ProdutoItem(camiseta);
 
-        // ---- BUILDER ----
         Pedido pedido = new Pedido.Builder("PED-001", "Maria Silva")
                 .comEndereco("Rua das Flores, 123 - São Paulo/SP")
                 .adicionarItem(itemNotebook)
@@ -34,16 +38,13 @@ public class Main {
                 .adicionarItem(itemCamiseta)
                 .build();
 
-        System.out.println(pedido);
-        System.out.println();
+        LOGGER.info("{}", pedido);
 
-        // ---- STRATEGY ----
         EstrategiaPagamento pagamento = new PagamentoCartaoCredito("1234567812345678", 3);
 
-        // ---- FACADE (orquestra CHAIN OF RESPONSIBILITY, OBSERVER e SINGLETON) ----
         PedidoFacade facade = new PedidoFacade();
         facade.finalizarPedido(pedido, pagamento);
 
-        System.out.println("\nStatus final do pedido: " + pedido.getStatus());
+        LOGGER.info("Status final do pedido: {}", pedido.getStatus());
     }
 }

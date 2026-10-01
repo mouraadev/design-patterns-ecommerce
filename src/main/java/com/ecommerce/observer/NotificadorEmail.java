@@ -2,12 +2,19 @@ package com.ecommerce.observer;
 
 import com.ecommerce.builder.Pedido;
 import com.ecommerce.enums.StatusPedido;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class NotificadorEmail implements ObservadorPedido {
+public final class NotificadorEmail implements ObservadorPedido {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificadorEmail.class);
+
+    public NotificadorEmail() {
+    }
 
     @Override
     public void atualizar(Pedido pedido, StatusPedido novoStatus) {
-        System.out.printf("[E-mail] Olá %s, o status do seu pedido %s mudou para: %s%n",
+        LOGGER.info("[E-mail] Olá {}, o status do seu pedido {} mudou para: {}",
                 pedido.getCliente(), pedido.getId(), novoStatus);
     }
 }

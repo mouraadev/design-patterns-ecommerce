@@ -2,13 +2,14 @@ package com.ecommerce.decorator;
 
 import com.ecommerce.factory.Produto;
 
+import java.util.Objects;
 
-public class ProdutoItem implements Item {
+public final class ProdutoItem implements Item {
 
     private final Produto produto;
 
     public ProdutoItem(Produto produto) {
-        this.produto = produto;
+        this.produto = Objects.requireNonNull(produto, "O produto é obrigatório.");
     }
 
     @Override
