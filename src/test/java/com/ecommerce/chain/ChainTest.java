@@ -1,9 +1,9 @@
 package com.ecommerce.chain;
 
-import com.ecommerce.builder.Pedido;
+import com.ecommerce.builder.Order;
 import com.ecommerce.decorator.Item;
-import com.ecommerce.exception.EstoqueInsuficienteException;
-import com.ecommerce.exception.PedidoInvalidoException;
+import com.ecommerce.exception.InsufficientStockException;
+import com.ecommerce.exception.InvalidOrderException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,45 +12,65 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ChainTest {
 
     @Test
-    void deveExecutarTodaACadeia() {
-        Pedido pedido = pedidoCom("Rua C, 30", 100.0);
-        ValidadorPedido proximo = mock(ValidadorPedido.class);
-        ValidadorPedido endereco = new ValidadorEndereco();
-        endereco.definirProximo(proximo);
+    void shouldInvokeNextValidator() {
+        Order order = orderWith("30 C Street", 100.0);
+        OrderValidator next = mock(OrderValidator.class);
+        OrderValidator address = new AddressValidator();
+        address.setNext(next);
 
-        assertDoesNotThrow(() -> endereco.validar(pedido));
-        verify(proximo).validar(pedido);
+        assertDoesNotThrow(() -> address.validate(order));
+        verify(next).validate(order);
     }
 
     @Test
-    void deveLancarExcecaoParaPedidoSemEstoque() {
-        Pedido pedido = mock(Pedido.class);
-        when(pedido.getId()).thenReturn("PED-EMPTY");
-        when(pedido.getItens()).thenReturn(List.of());
+    void shouldThrowWhenOrderHasNoStock() {
+        Order order = mock(Order.class);
+        when(order.getId()).thenReturn("ORD-EMPTY");
+        when(order.getItems()).thenReturn(List.of());
 
-        assertThrows(EstoqueInsuficienteException.class,
-                () -> new ValidadorEstoque().validar(pedido));
+        assertThrows(InsufficientStockException.class,
+                () -> new StockValidator().validate(order));
     }
 
     @Test
-    void deveLancarExcecaoParaEnderecoAusenteOuSuspeitaDeFraude() {
-        assertThrows(PedidoInvalidoException.class,
-                () -> new ValidadorEndereco().validar(pedidoCom(null, 100.0)));
-        assertThrows(PedidoInvalidoException.class,
-                () -> new ValidadorFraude().validar(pedidoCom("Rua D, 40", 10_000.0)));
+    void shouldThrowForMissingAddressOrSuspectedFraud() {
+        assertThrows(InvalidOrderException.class,
+                () -> new AddressValidator().validate(orderWith(null, 100.0)));
+        assertThrows(InvalidOrderException.class,
+                () -> new FraudValidator().validate(orderWith("40 D Street", 10_000.0)));
     }
 
-    private static Pedido pedidoCom(String endereco, double preco) {
+    @Test
+    void shouldStopBeforeNextValidatorWhenCurrentRuleFails() {
+        OrderValidator next = mock(OrderValidator.class);
+        OrderValidator address = new AddressValidator();
+        address.setNext(next);
+
+        assertThrows(InvalidOrderException.class, () -> address.validate(orderWith(null, 100.0)));
+
+        verifyNoInteractions(next);
+    }
+
+    @Test
+    void shouldAcceptOrderThroughAllDefaultRules() {
+        OrderValidator stock = new StockValidator();
+        stock.setNext(new AddressValidator()).setNext(new FraudValidator());
+
+        assertDoesNotThrow(() -> stock.validate(orderWith("Valid address", 9_999.99)));
+    }
+
+    private static Order orderWith(String address, double price) {
         Item item = mock(Item.class);
-        when(item.getPreco()).thenReturn(preco);
-        Pedido.Builder builder = new Pedido.Builder("PED-CHAIN", "Bia").adicionarItem(item);
-        if (endereco != null) {
-            builder.comEndereco(endereco);
+        when(item.getPrice()).thenReturn(price);
+        Order.Builder builder = new Order.Builder("ORD-CHAIN", "Bea").addItem(item);
+        if (address != null) {
+            builder.withAddress(address);
         }
         return builder.build();
     }

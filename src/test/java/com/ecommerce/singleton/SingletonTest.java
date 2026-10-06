@@ -10,13 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class SingletonTest {
 
     @Test
-    void deveRetornarSempreAMesmaInstanciaInclusiveEmParalelo() {
-        ConfiguracaoSistema esperada = ConfiguracaoSistema.getInstance();
+    void shouldAlwaysReturnSameInstanceIncludingInParallel() {
+        SystemConfiguration expected = SystemConfiguration.getInstance();
 
         IntStream.range(0, 100).parallel()
-                .forEach(indice -> assertSame(esperada, ConfiguracaoSistema.getInstance()));
+                .forEach(index -> assertSame(expected, SystemConfiguration.getInstance()));
 
-        assertEquals("TechShop Brasil", esperada.getNomeLoja());
-        assertEquals(0.08, esperada.getTaxaImpostoPadrao(), 0.001);
+        assertEquals("TechShop Brazil", expected.getStoreName());
+        assertEquals(0.08, expected.getDefaultTaxRate(), 0.001);
     }
 }

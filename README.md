@@ -1,99 +1,171 @@
-# Sistema de Pedidos — Design Patterns em Java
+# Order System — Design Patterns in Java
 
-Projeto final do desafio **"Padrões de Projeto"** do bootcamp (DIO). O objetivo
-era consolidar na prática os padrões de projeto vistos em aula. Em vez de
-reproduzir exemplos soltos, este repositório implementa **8 padrões de projeto
-integrados em um único domínio coeso**: um sistema simplificado de pedidos de
-e-commerce.
+[![Java](https://img.shields.io/badge/Java-17%2B-orange)](https://www.oracle.com/java/)
+[![Maven](https://img.shields.io/badge/Maven-3.9%2B-blue)](https://maven.apache.org/)
+[![CI](https://github.com/mouraadev/design-patterns-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/mouraadev/design-patterns-ecommerce/actions/workflows/ci.yml)
 
-## Padrões implementados
+A learning project that applies eight design patterns to a single e-commerce
+order workflow. The application creates products, adds services to items,
+builds an order, performs validations, processes payment, and notifies the
+customer whenever the order status changes.
 
-| Padrão | Onde está | O que resolve aqui |
+## Implemented patterns
+
+| Pattern | Implementation | Responsibility |
 |---|---|---|
-| **Builder** | `builder/Pedido.java` | Constrói um `Pedido` passo a passo (cliente, endereço, itens) com uma API fluente. |
-| **Factory Method** | `factory/ProdutoFactory.java` | Cria diferentes tipos de produto (`Eletronico`, `Livro`, `Roupa`) sem expor as classes concretas ao cliente. |
-| **Decorator** | `decorator/*` | Adiciona serviços extras a um item do pedido (embalagem de presente, seguro de envio) dinamicamente, sem alterar as classes de produto. |
-| **Strategy** | `strategy/*` | Permite trocar a forma de pagamento (cartão, boleto, Pix) em tempo de execução. |
-| **Observer** | `observer/*`, `builder/Pedido.java` | Notifica automaticamente (e-mail, SMS) o cliente a cada mudança de status do pedido. |
-| **Chain of Responsibility** | `chain/*` | Executa validações em cadeia (estoque → endereço → antifraude) antes de aprovar o pedido. |
-| **Facade** | `facade/PedidoFacade.java` | Expõe um único método (`finalizarPedido`) que orquestra toda a complexidade dos padrões acima. |
-| **Singleton** | `singleton/ConfiguracaoSistema.java` | Garante uma única instância de configuração/log do sistema, acessível globalmente. |
+| Builder | `builder/Order.java` | Builds orders through a fluent API. |
+| Factory (Simple Factory) | `factory/ProductFactory.java` | Centralizes the creation of electronics, books, and clothing through an enum and a static method. |
+| Decorator | `decorator/*` | Adds gift wrapping and shipping insurance to items. |
+| Strategy | `strategy/*` | Supports credit card, bank slip, and Pix payments. |
+| Observer | `observer/*` | Simulates email and SMS notifications through logs after status changes. |
+| Chain of Responsibility | `chain/*` | Chains stock, address, and fraud validations. |
+| Facade | `facade/OrderFacade.java` | Coordinates validation, payment, status changes, and notifications. |
+| Singleton | `singleton/SystemConfiguration.java` | Maintains a single instance of the store configuration. |
 
-## Qualidade e arquitetura
+## Order workflow
 
-Além dos oito padrões, o projeto inclui as melhorias levantadas na revisão de
-código:
-
-- testes unitários com JUnit e Mockito para todos os padrões;
-- inversão de dependência na cadeia por meio da interface `ValidadorPedido`;
-- exceções de domínio para pedido inválido, falta de estoque e pagamento recusado;
-- cópias defensivas, campos finais e Singleton thread-safe;
-- logging com SLF4J, sem chamadas diretas a `System.out`;
-- relatório e limite mínimo de cobertura com JaCoCo;
-- integração contínua com GitHub Actions.
-
-## Estrutura do projeto
-
+```text
+CREATION
+  ↓
+STOCK VALIDATION → ADDRESS VALIDATION → FRAUD ANALYSIS
+  ↓
+PAYMENT PROCESSING
+  ↓
+PAYMENT_APPROVED → PICKING → SHIPPED
 ```
+
+If validation fails, the order receives the `CANCELLED` status. If the charge
+is declined, it receives the `PAYMENT_DECLINED` status.
+
+Each order instance can be processed only once, even when multiple facade instances
+try concurrently or a caller resets its status. The atomic claim is retained after
+unexpected failures to prevent an unsafe payment retry; such failures need investigation.
+This protection is in memory, per object, and does not deduplicate separate objects
+with the same ID or requests across processes.
+
+A listener's runtime exception is logged without interrupting the order workflow or
+the remaining listeners. Notifications are synchronous and are not retried automatically.
+Status updates themselves do not enforce a transition graph or order concurrent events.
+
+This is a teaching simulation: payment methods always approve valid amounts, inventory
+validation only checks for a nonempty item list, and no email or SMS is actually sent.
+The configured tax rate is not applied to totals. The factory uses the Simple Factory
+variant rather than a hierarchy of Factory Method creators.
+
+## Project quality
+
+- 24 unit tests across eight test suites;
+- JUnit 6 and Mockito for testing and dependency isolation;
+- dependency inversion through the `OrderValidator` interface;
+- domain exceptions for invalid orders, insufficient stock, and declined payments;
+- defensive collection copies, immutable fields, and a thread-safe Singleton;
+- one processing attempt per order instance and isolated notification failures;
+- structured logging with SLF4J;
+- JaCoCo line coverage with a minimum threshold of 70%;
+- automated builds and tests with GitHub Actions;
+- a self-contained executable JAR with all required runtime dependencies.
+
+## Technologies
+
+- Java 17+
+- Maven 3.9+
+- JUnit 6.1.3
+- Mockito 5.24.0
+- SLF4J 2.0.20
+- JaCoCo 0.8.14
+
+## Project structure
+
+```text
 design-patterns-ecommerce/
+├── .github/workflows/ci.yml
 ├── pom.xml
-├── .github/workflows/ci.yml          # build e testes em cada PR/push
-├── .gitignore
 ├── README.md
 └── src/
     ├── main/java/com/ecommerce/
-    │   ├── Main.java                 # demonstra todos os padrões em conjunto
-    │   ├── builder/Pedido.java
-    │   ├── factory/*
-    │   ├── decorator/*
-    │   ├── strategy/*
-    │   ├── observer/*
-    │   ├── chain/*
-    │   ├── facade/PedidoFacade.java
-    │   ├── singleton/ConfiguracaoSistema.java
-    │   ├── exception/*
-    │   └── enums/StatusPedido.java
-    └── test/java/com/ecommerce/      # oito suítes de testes unitários
+    │   ├── Main.java
+    │   ├── builder/
+    │   ├── chain/
+    │   ├── decorator/
+    │   ├── enums/
+    │   ├── exception/
+    │   ├── facade/
+    │   ├── factory/
+    │   ├── observer/
+    │   ├── singleton/
+    │   └── strategy/
+    └── test/java/com/ecommerce/
 ```
 
-## Como executar
+## Running the project
 
-Requer **JDK 17+** e **Maven 3.9+**.
+### IntelliJ IDEA
+
+1. Open the project directory in IntelliJ IDEA.
+2. Wait for IntelliJ to import the dependencies from `pom.xml`.
+3. Open `src/main/java/com/ecommerce/Main.java`.
+4. Click the run button next to the `main` method.
+
+### Terminal
+
+From the project root, compile the application, run the tests, verify coverage,
+and generate the executable JAR:
 
 ```bash
-# compilar, testar, verificar cobertura e gerar o JAR executável
 mvn clean verify
+```
 
-# executar a demonstração
+If the `mvn` command is unavailable, run `verify` from IntelliJ's
+**Maven → Lifecycle** window or install Maven and add its `bin` directory to
+your `PATH`.
+
+Run the application:
+
+```bash
 java -jar target/design-patterns-ecommerce.jar
 ```
 
-O relatório de cobertura é gerado em `target/site/jacoco/index.html`. O build
-falha se a cobertura de linhas do projeto cair abaixo de 70%.
+## Tests and coverage
 
-## Exemplo de saída
+Run only the tests:
 
-```text
-[main] INFO com.ecommerce.Main - Pedido PED-001 - Cliente: Maria Silva
-  - Notebook Gamer + Seguro de envio (R$ 4524.90)
-  - Clean Code + Embalagem para presente (R$ 99.80)
-  - Camiseta DIO (R$ 59.90)
-Total: R$ 4684.60
-Status: CRIADO
-
-[main] INFO com.ecommerce.facade.PedidoFacade - [TechShop Brasil] Iniciando processamento do pedido PED-001
-[main] INFO com.ecommerce.chain.ValidadorEstoque - Estoque validado para o pedido PED-001
-[main] INFO com.ecommerce.chain.ValidadorEndereco - Endereço validado para o pedido PED-001
-[main] INFO com.ecommerce.chain.ValidadorFraude - Análise antifraude aprovada para o pedido PED-001
-[main] INFO com.ecommerce.facade.PedidoFacade - [TechShop Brasil] Processando pagamento via Cartão de Crédito (3x)
-[main] INFO com.ecommerce.strategy.PagamentoCartaoCredito - Cobrando R$ 4684.60 no cartão final 5678 em 3x
-...
-[main] INFO com.ecommerce.Main - Status final do pedido: ENVIADO
+```bash
+mvn test
 ```
 
-## Referências
+Run the complete verification process and generate the coverage report:
 
-Projeto desenvolvido como entrega do desafio de Padrões de Projeto do
-bootcamp DIO, com base nos repositórios de referência da trilha:
-- [Lab Padrões de Projeto Java](https://github.com/digitalinnovationone/lab-padroes-projeto-java)
-- [Lab Padrões de Projeto Spring](https://github.com/digitalinnovationone/lab-padroes-projeto-spring)
+```bash
+mvn verify
+```
+
+The HTML coverage report is generated at:
+
+```text
+target/site/jacoco/index.html
+```
+
+The build fails automatically if total line coverage falls below 70%.
+
+## Example output
+
+```text
+[main] INFO com.ecommerce.Main - === Order System - Design Patterns Demo ===
+[main] INFO com.ecommerce.Main - Order ORD-001 - Customer: Ryan Moura
+  - Gaming Laptop + Shipping insurance (R$ 4524.90)
+  - Clean Code + Gift wrapping (R$ 99.80)
+  - DIO T-shirt (R$ 59.90)
+Total: R$ 4684.60
+Status: CREATED
+
+[main] INFO com.ecommerce.chain.StockValidator - Stock validated for order ORD-001
+[main] INFO com.ecommerce.chain.AddressValidator - Address validated for order ORD-001
+[main] INFO com.ecommerce.chain.FraudValidator - Fraud analysis approved for order ORD-001
+[main] INFO com.ecommerce.strategy.CreditCardPayment - Charging R$ 4684.60 to the card ending in 5678 in 3 installment(s)
+[main] INFO com.ecommerce.Main - Final order status: SHIPPED
+```
+
+## References
+
+- [Java Design Patterns Lab](https://github.com/digitalinnovationone/lab-padroes-projeto-java)
+- [Spring Design Patterns Lab](https://github.com/digitalinnovationone/lab-padroes-projeto-spring)

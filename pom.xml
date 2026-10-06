@@ -9,11 +9,11 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Design Patterns - Sistema de Pedidos</name>
+    <name>Design Patterns - Order System</name>
     <description>
-        Projeto final do desafio de Padrões de Projeto (Design Patterns) do bootcamp DIO.
-        Demonstra Builder, Factory Method, Strategy, Observer, Decorator,
-        Chain of Responsibility, Facade e Singleton em um único domínio coeso.
+        Final project for the DIO Design Patterns bootcamp challenge.
+        Demonstrates Builder, Simple Factory, Strategy, Observer, Decorator,
+        Chain of Responsibility, Facade, and Singleton in a cohesive domain.
     </description>
 
     <properties>

@@ -2,7 +2,7 @@ package com.ecommerce.decorator;
 
 public interface Item {
 
-    String getDescricao();
+    String getDescription();
 
-    double getPreco();
+    double getPrice();
 }

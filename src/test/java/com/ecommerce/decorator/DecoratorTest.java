@@ -1,6 +1,6 @@
 package com.ecommerce.decorator;
 
-import com.ecommerce.factory.ProdutoFactory;
+import com.ecommerce.factory.ProductFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,21 +9,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class DecoratorTest {
 
     @Test
-    void deveComporDescricaoEPrecoSemAlterarProdutoOriginal() {
-        Item original = new ProdutoItem(ProdutoFactory.criar(
-                ProdutoFactory.TipoProduto.LIVRO, "Refactoring", 100.0));
-        Item decorado = new SeguroEnvio(new EmbalagemPresente(original));
+    void shouldComposeDescriptionAndPriceWithoutChangingOriginalProduct() {
+        Item original = new ProductItem(ProductFactory.create(
+                ProductFactory.ProductType.BOOK, "Refactoring", 100.0));
+        Item decorated = new ShippingInsurance(new GiftWrapping(original));
 
-        assertEquals("Refactoring", original.getDescricao());
-        assertEquals(100.0, original.getPreco(), 0.001);
-        assertEquals("Refactoring + Embalagem para presente + Seguro de envio",
-                decorado.getDescricao());
-        assertEquals(134.80, decorado.getPreco(), 0.001);
+        assertEquals("Refactoring", original.getDescription());
+        assertEquals(100.0, original.getPrice(), 0.001);
+        assertEquals("Refactoring + Gift wrapping + Shipping insurance",
+                decorated.getDescription());
+        assertEquals(134.80, decorated.getPrice(), 0.001);
     }
 
     @Test
-    void deveRejeitarDependenciasNulas() {
-        assertThrows(NullPointerException.class, () -> new ProdutoItem(null));
-        assertThrows(NullPointerException.class, () -> new SeguroEnvio(null));
+    void shouldRejectNullDependencies() {
+        assertThrows(NullPointerException.class, () -> new ProductItem(null));
+        assertThrows(NullPointerException.class, () -> new ShippingInsurance(null));
     }
 }
